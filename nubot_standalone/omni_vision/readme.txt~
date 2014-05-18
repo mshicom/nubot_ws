@@ -1,0 +1,3 @@
+rosrun prosilica_camera prosilica_node
+rosrun nubot_standalone omni_vision
+

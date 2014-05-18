@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+   <FileVersion major="1" minor="6" />
+   <Project>
+      <Option title="rtdb" />
+      <Option makefile_is_custom="1" />
+      <Option compiler="gcc" />
+      <Option virtualFolders="CMake Files\;CMake Files\rtdb\;CMake Files\comm\;CMake Files\example\;" />
+      <Build>
+      <Target title="all">
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/Makefile&quot;  VERBOSE=1 all" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="rebuild_cache">
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/Makefile&quot;  VERBOSE=1 rebuild_cache" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="rtdb">
+         <Option output="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/lib/librtdb.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb/Makefile&quot;  VERBOSE=1 rtdb" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="rtdb/fast">
+         <Option output="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/lib/librtdb.a" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb" />
+         <Option object_output="./" />
+         <Option type="2" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb/Makefile&quot;  VERBOSE=1 rtdb/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="comm">
+         <Option output="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin/comm" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/comm/Makefile&quot;  VERBOSE=1 comm" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/comm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/comm/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/comm/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="comm/fast">
+         <Option output="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin/comm" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/comm/Makefile&quot;  VERBOSE=1 comm/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/comm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/comm/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/comm/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="read">
+         <Option output="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin/read" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 read" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="read/fast">
+         <Option output="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin/read" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 read/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="write">
+         <Option output="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin/write" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 write" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="write/fast">
+         <Option output="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin/write" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/bin" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 write/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      </Build>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/comm/comm.c">
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/comm/multicast.c">
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/example/read.c">
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/example/write.c">
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb/rtdb_api.c">
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/comm/multicast.h">
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb/rtdb_api.h">
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\" />
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/rtdb/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\rtdb\" />
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/comm/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\comm\" />
+      </Unit>
+      <Unit filename="/home/xiao/workspace/msl/CAMBADA/rtdb_new/example/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\example\" />
+      </Unit>
+   </Project>
+</CodeBlocks_project_file>

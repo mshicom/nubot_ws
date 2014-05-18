@@ -1,0 +1,1 @@
+/usr/bin/gcc      CMakeFiles/comm.dir/multicast.c.o CMakeFiles/comm.dir/comm.c.o  -o ../bin/comm -rdynamic -lpthread ../lib/librtdb.a 

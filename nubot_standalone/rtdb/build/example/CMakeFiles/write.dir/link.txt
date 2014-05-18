@@ -1,0 +1,1 @@
+/usr/bin/gcc      CMakeFiles/write.dir/write.c.o  -o ../bin/write -rdynamic ../lib/librtdb.a 
