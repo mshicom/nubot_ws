@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1157</width>
+    <height>733</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QPushButton" name="receive_image_btn">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>630</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>update_image</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="loadImage_Btn">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>670</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>LoadImage</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="Color_Box">
+   <property name="geometry">
+    <rect>
+     <x>600</x>
+     <y>610</y>
+     <width>131</width>
+     <height>101</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>color_selection</string>
+   </property>
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>12</x>
+      <y>33</y>
+      <width>53</width>
+      <height>50</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <item>
+      <widget class="QRadioButton" name="YUV_RadioBtn">
+       <property name="text">
+        <string>YUV</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="HSI_RadioBtn">
+       <property name="text">
+        <string>HSI</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="Object_Box">
+   <property name="geometry">
+    <rect>
+     <x>750</x>
+     <y>610</y>
+     <width>161</width>
+     <height>101</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>object_selection</string>
+   </property>
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>119</width>
+      <height>77</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QRadioButton" name="ball_seg_Btn">
+       <property name="text">
+        <string>ball_segment</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="obs_seg_Btn">
+       <property name="text">
+        <string>obs_segment</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="field_segment_Btn">
+       <property name="contextMenuPolicy">
+        <enum>Qt::ActionsContextMenu</enum>
+       </property>
+       <property name="text">
+        <string>field_segment</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="segment_result_btn">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>630</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>segment_result</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="Image_ROI_Box">
+   <property name="geometry">
+    <rect>
+     <x>950</x>
+     <y>610</y>
+     <width>131</width>
+     <height>101</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Image_ROI</string>
+   </property>
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>95</width>
+      <height>79</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QRadioButton" name="BigCircle_Btn">
+       <property name="text">
+        <string>BigCircle</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="SmallCircle_Btn">
+       <property name="contextMenuPolicy">
+        <enum>Qt::DefaultContextMenu</enum>
+       </property>
+       <property name="text">
+        <string>SmallCircle</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="Save_ROI_Btn">
+       <property name="text">
+        <string>Save_ROI</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="Save_Result_Btn">
+   <property name="geometry">
+    <rect>
+     <x>460</x>
+     <y>670</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Save_Result</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Load_Result_Btn">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>630</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Load_Result</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="white_wave_Btn">
+   <property name="geometry">
+    <rect>
+     <x>460</x>
+     <y>630</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::WheelFocus</enum>
+   </property>
+   <property name="text">
+    <string>white_wave</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="show_segmentBtn">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>670</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>show_segment</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Save_image_Btn">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>672</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Save_Image</string>
+   </property>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>

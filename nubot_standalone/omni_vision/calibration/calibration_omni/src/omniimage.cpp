@@ -1,23 +1,9 @@
-#include "nubot/omni_vision/omniimage.h"
+#include "omniimage.h"
 #include <fstream>
 using namespace nubot;
 
-Omni_Image::Omni_Image(const char* infopath)
+Omni_Image::Omni_Image()
 {
-    cv::FileStorage roi_file(infopath, cv::FileStorage::READ);
-    int tmp1,tmp2;
-    roi_file["center_point_row"]>>tmp2;
-    roi_file["center_point_column"]>>tmp1;
-    img_ROI_.center_=DPoint2d(tmp1,tmp2);
-    small_ROI_.center_=img_ROI_.center_;
-    roi_file["big_radius"] >>img_ROI_.radius_;
-    roi_file ["small_radius"] >> small_ROI_.radius_;
-    roi_file ["rows"]>>height_;
-    roi_file ["cols"]>>width_;
-    // becaurse the diatance is beyond 70m;
-    img_ROI_.radius_=img_ROI_.radius_-10;
-    small_ROI_.radius_=small_ROI_.radius_+10;
-    roi_file.release();
 }
 Omni_Image::~Omni_Image()
 {
@@ -109,8 +95,10 @@ Omni_Image::bgr2hsv(Vec3b bgr)
          }
          initialized = true;
      }
-    Scalar color_bgr(bgr[0],bgr[1],bgr[2]);
 
+
+    Scalar color_bgr(bgr[0],bgr[1],bgr[2]);
+    cv::Vec3b HSI;
     int b = color_bgr[0], g = color_bgr[1], r = color_bgr[2];
     int h, s, v = b;
     int vmin = b, diff;
@@ -130,7 +118,6 @@ Omni_Image::bgr2hsv(Vec3b bgr)
     h = (h * hdiv_table[diff] + (1 << (hsv_shift-1))) >> hsv_shift;
     h += h < 0 ? hr : 0;
 
-    cv::Vec3b HSI;
     HSI[0] =cv::saturate_cast<uchar>(h);
     HSI[1] = (uchar)s;
     HSI[2] = (uchar)v;

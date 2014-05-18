@@ -7,7 +7,7 @@ Obstacles::Obstacles(ScanPoints & _scanpts,Transfer & _trans)
 	scanpts_=&_scanpts;	
 	transfer_=& _trans;
 	size_t numtrans=scanpts_->polar_pts_.size();
-    obsthres_=60;
+    obsthres_=63;
 	interval_radian_=DOUBLEPI_CONSTANT/numtrans;
 	
 	weight_.resize(numtrans);
@@ -154,7 +154,7 @@ Obstacles::getobstacles()
 			{
 				//determine center of obstacle in case of n>1
 				if (n>1) obsphi = philower+(phiupper-philower)*i/(n-1.0);			
-				obstacles_.push_back(PPoint(Angle(obsphi),obsdist));	
+                obstacles_.push_back(PPoint(Angle(obsphi),obsdist+25));
 				++numobstacles;
 			}
 		}
@@ -185,5 +185,5 @@ void Obstacles::show()
 			cv::circle(img,cv::Point(pts[j].x_,pts[j].y_),1,Scalar(0,0,255),2,8,0);
 	}
 	imshow("BlackPts",img);
-	cv::waitKey(0);
+    cv::waitKey(5);
 }

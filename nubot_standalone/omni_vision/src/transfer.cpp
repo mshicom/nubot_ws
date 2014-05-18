@@ -3,33 +3,28 @@
 
 using namespace nubot;
 
-Transfer::Transfer(const char* calinfo, Omni_Image & _omni_img)
+Transfer::Transfer(const char* infopath,Omni_Image & _omni_img)
 {
-	omni_img_=&_omni_img;
+    omni_img_=&_omni_img;
     width_ =omni_img_->get_width();
     height_=omni_img_->get_height();
-	std::ifstream findispictoworld(calinfo);
-    real_distances_=new double[width_*height_];
-    memset(real_distances_,0,width_*height_*sizeof(double));
-	double tempforcalib;
-    for (int i=0;i<height_;i++)
-	{
-        for (int j=0;j<width_;j++)
-		{
-			findispictoworld>>tempforcalib;
-            *(real_distances_+i*width_+j)=tempforcalib;
-		}
-	}
-	findispictoworld.close();	
+
+    cv::FileStorage calibration(infopath, cv::FileStorage::READ);
+    double temp1,temp2;
+    calibration["center_coloum"]>>temp1;
+    calibration["center_row"]>>temp2;
+    center_=DPoint2d(temp1,temp2);
+    calibration["para_a"]>>para_a_;
+    calibration["para_b"]>>para_b_;
+    calibration.release();
 }
 
 double   
 Transfer::realdistance(const DPoint2i & img_coor)
 {
-    DPoint2d temptrans=DPoint2d(img_coor)-omni_img_->get_big_roi().center_;
+    DPoint2d temptrans=DPoint2d(img_coor)-center_;
     double pixel_dis=temptrans.norm();
-    return 1.7368441469469196*tan(0.0070288129501232368*pixel_dis)*100;
-  //  return real_distances_[int(img_coor.y_)*width_+int(img_coor.x_)];
+    return para_a_*tan(para_b_*pixel_dis)*100;
 }
 
 vector<double> 
@@ -48,7 +43,7 @@ Transfer::realdistance(const std::vector<DPoint2i>& img_coor)
 PPoint
 Transfer::realcoordinates(const DPoint2i & img_coor)
 {
-    DPoint2d temptrans=DPoint2d(img_coor)-omni_img_->get_big_roi().center_;
+    DPoint2d temptrans=DPoint2d(img_coor)-center_;
 	return PPoint(temptrans.angle(),realdistance(img_coor));
 }
 

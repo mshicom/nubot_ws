@@ -1,15 +1,13 @@
-#include "nubot/omni_vision/whites.h"
+#include "whites.h"
 
 using namespace nubot;
-Whites::Whites(ScanPoints & _scanpts,Transfer & _coor_transfer)
+
+Whites::Whites(ScanPoints & _scanpts)
 {
-   scanpts_   = &_scanpts;
-   transfer_ =&_coor_transfer;
-  
-   img_white_.reserve(1000);
-   
-   h_low_=45;
-   h_high_=100;
+   scanpts_   = &_scanpts;  
+   img_white_.reserve(1000);   
+   h_low_=50;
+   h_high_=120;
    nums_pts_line_=5;
    filter_width_=2;          
    merge_wave_=3;
@@ -26,15 +24,64 @@ Whites::Whites(ScanPoints & _scanpts,Transfer & _coor_transfer)
    for (int i=I_max+1;i<256;i++)
 	   t_new[i]=float(T_max);
 }
+
+
+void
+Whites::on_mouse( int event, int x, int y, int flags, void* tmpThis)
+{
+    Whites* PThis = (Whites*)tmpThis;
+    CvFont font;
+    cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.5, 0.5, 0, 1, CV_AA);
+    if( event == CV_EVENT_LBUTTONDOWN )
+    {
+        cv::Mat img=PThis->image_show_.clone();
+        DPoint2i pt(x,y);
+        size_t numstrans=PThis->image_whites_.size();
+        double min_dis=1000000;
+        int label=0;
+        for(std::size_t i =0 ; i < numstrans ;i++)
+        {
+            double tmp_dis=PThis->image_whites_[i].distance(pt);
+            if(min_dis > tmp_dis)
+            {
+                min_dis=tmp_dis;
+                label=i;
+            }
+        }
+        PThis->image_whites_.erase(PThis->image_whites_.begin()+label);
+        PThis->img_white_=PThis->image_whites_;
+        numstrans=PThis->image_whites_.size();
+        for(size_t i=0 ;i<numstrans; i++)
+            cv::circle(img,cv::Point(PThis->image_whites_[i].x_,PThis->image_whites_[i].y_),1,Scalar(0,0,255),2,8,0);
+        imshow("WhitePoints",img);
+
+    }
+    if( event == CV_EVENT_RBUTTONDOWN )
+    {
+        cv::Mat img=PThis->image_show_.clone();
+        DPoint2i pt(x,y);
+        PThis->image_whites_.push_back(pt);
+        PThis->img_white_=PThis->image_whites_;
+        size_t numstrans=PThis->image_whites_.size();
+        for(size_t i=0 ;i<numstrans; i++)
+            cv::circle(img,cv::Point(PThis->image_whites_[i].x_,PThis->image_whites_[i].y_),1,Scalar(0,0,255),2,8,0);
+        imshow("WhitePoints",img);
+    }
+}
+
 void
 Whites::showWhitePoints()
 {
-    cv::Mat img=scanpts_->omni_img_->get_bgr_image().clone();
+    image_show_=scanpts_->omni_img_->get_bgr_image().clone();
+    cv::Mat img=image_show_.clone();
+    cv::namedWindow("WhitePoints",1);
+    cv::setMouseCallback( "WhitePoints", on_mouse, this);
+    image_whites_=img_white_;
 	size_t numstrans=img_white_.size();
 	for(size_t i=0 ;i<numstrans; i++)
-	   cv::circle(img,cv::Point(img_white_[i].x_,img_white_[i].y_),1,Scalar(0,0,255),2,8,0);
-	imshow("WhitePoints",img);
-    cv::waitKey(10);
+       cv::circle(img,cv::Point(img_white_[i].x_,img_white_[i].y_),1,Scalar(0,0,255),2,8,0);
+    imshow("WhitePoints",img);
+	cv::waitKey(0);
 }
 
 void
@@ -168,7 +215,7 @@ Whites::IsWhitePoint(std::vector<DPoint2i> & _pts,double _color_sum,vector<doubl
                 cv::Vec3b color_hsv=scanpts_->omni_img_->bgr2hsv(bgr);
 				H_right=color_hsv[0];
 			}
-			if (H_left>=h_low_ && H_left<=h_high_ && H_right>=h_low_-50&& H_right<=h_high_+30&&std::abs(H_left-H_right)<=80)
+            if (H_left>=h_low_ && H_left<=h_high_ && H_right>=h_low_-50&& H_right<=h_high_+30)//&&std::abs(H_left-H_right)<=50)
 			{
 				if ((_colors[_peaks.peak_index-_peaks.width]>=0.45*aver_colors && _colors[_peaks.peak_index+_peaks.width]>=0.45*aver_colors)|| 
 					(_colors[_peaks.peak_index-_peaks.width]>=0.45*100 && _colors[_peaks.peak_index+_peaks.width]>=0.45*100))  
@@ -226,23 +273,6 @@ Whites::detectWhitePts(std::vector<DPoint2i> & pts,std::vector<uchar> & ColorY)
  	}
 }
 
-void 
-Whites::calculateWeights()
-{
-	weights_.clear();
-	double ref2=150.0*150.0;
-	double d2=250.0*250.0;
-	double tmpweight(0);
-	size_t numtrans=robot_white_.size();
-	weights_.reserve(numtrans);
-	for(size_t index=0; index < numtrans; index++)
-	{
-        PPoint & pt=robot_white_[index];
-		double distofeature=pt.radius_*pt.radius_;
-		tmpweight=(ref2+d2)/(d2+distofeature);
-		weights_.push_back(tmpweight);
-	}
-}
 
 void
 Whites::process()
@@ -256,9 +286,7 @@ Whites::process()
 	size_t nums_horizs=scanpts_->horiz_pts_.size();
 	for(size_t i = 0; i < nums_horizs ; i++)
 	{
-		detectWhitePts(scanpts_->horiz_pts_[i],scanpts_->horiz_pts_y_[i]);
-		detectWhitePts(scanpts_->verti_pts_[i],scanpts_->verti_pts_y_[i]);
+        detectWhitePts(scanpts_->horiz_pts_[i],scanpts_->horiz_pts_y_[i]);
+        detectWhitePts(scanpts_->verti_pts_[i],scanpts_->verti_pts_y_[i]);
 	}
-	robot_white_=transfer_->realcoordinates(img_white_);
-	calculateWeights();
 }

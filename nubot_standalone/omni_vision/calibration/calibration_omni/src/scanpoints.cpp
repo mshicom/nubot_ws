@@ -1,11 +1,11 @@
-#include "nubot/omni_vision/scanpoints.h"
+#include "scanpoints.h"
 
 using namespace nubot;
 
 ScanPoints::ScanPoints(Omni_Image & _omni_img)
 {
 	omni_img_=&_omni_img;
-    Circle  ImgROI = omni_img_->get_big_roi();
+    Circle  ImgROI    = omni_img_->get_big_roi();
 	polar_pts_.reserve(360);
 	for(size_t i=0 ; i<360; i++)
 	{

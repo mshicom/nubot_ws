@@ -14,7 +14,7 @@ class Transfer
 {
 public:
 	//! read distance calibration  result and image infomation and location info;
-    Transfer(const char* calinfo, Omni_Image & _omni_img);
+    Transfer(const char* infopath,Omni_Image & _omni_img);
 	
 	//!  get the actual distance between the robot and object location from image coordinate 
     double   realdistance(const DPoint2i & img_coor);
@@ -44,9 +44,12 @@ public:
     Omni_Image * omni_img_; //<-image information
 
 private:
-	double * real_distances_;   //<-distance calibration results
+    /*! @brief the center is got by calibration the mirror*/
+    DPoint2d center_;
     int height_;
     int width_;
+    double para_a_;
+    double para_b_;
 };
 
 }
