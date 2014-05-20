@@ -13,6 +13,9 @@
 #include "nubot_standalone/VelCmd.h"
 #include "nubot_HWController/cmac.h"
 
+#include "nubot_standalone/BallHandle.h"
+#include "nubot_standalone/Shoot.h"
+
 
 using namespace std;
 
@@ -30,6 +33,11 @@ public:
     void Read_VelCmd(const nubot_standalone::VelCmd::ConstPtr& cmd);
     void ParamChanged(nubot_HWController::controllerConfig &config, uint32_t level);
     void BaseController(/*const ros::TimerEvent &event*/);
+
+    bool BallHandleControlService(nubot_standalone::BallHandle::Request  &req,
+                                  nubot_standalone::BallHandle::Response &res);
+    bool ShootControlServive(nubot_standalone::Shoot::Request  &req,
+                             nubot_standalone::Shoot::Response &res);
 private:
     ros::NodeHandle n;
     ros::Timer timer1;
@@ -42,6 +50,9 @@ private:
     realtime_tools::RealtimePublisher<nubot_standalone::VelCmd> *OdeInfo_pub;
 
     ros::Subscriber Velcmd_sub_;
+
+    ros::ServiceServer ballhandle_service_;
+    ros::ServiceServer shoot_service_;
 
 public:
 

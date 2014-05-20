@@ -17,6 +17,8 @@
 #include <nubot_standalone/VelCmd.h>
 #include <nubot_standalone/WorldModelInfo.h>
 
+#include <nubot_standalone/BallHandle.h>
+#include <nubot_standalone/Shoot.h>
 
 using namespace std;
 
@@ -65,6 +67,9 @@ namespace nubot{
           ros::Subscriber  robotinfo_sub_;
           ros::Subscriber  obstaclesinfo_sub_;
           ros::Subscriber  worldmodelinfo_sub_;
+
+          ros::ServiceClient ballhandle_client_;
+          ros::ServiceClient shoot_client_;
 
 
           ros::Publisher   motor_cmd_pub_;
@@ -135,6 +140,12 @@ namespace nubot{
     // ballinfo_sub_  =  node_nh.subscribe("/worldmodel/ballinfo", 100, &MslControl::ballinfoUpdate,this);
     // robotinfo_sub_ =  node_nh.subscribe("/worldmodel/robotinfo", 100, &MslControl::robotinfoUpdate,this);
     // obstaclesinfo_sub_ =  node_nh.subscribe("/worldmodel/obstaclesinfo", 100, &MslControl::obstaclesinfoUpdate,this);
+
+     std::string  service = "ballhandle";
+     ballhandle_client_ =  local_nh.serviceClient<nubot_standalone::BallHandle>(service);
+     std::string  service1 = "shoot";
+     shoot_client_ = local_nh.serviceClient<nubot_standalone::Shoot>(service1);
+
      worldmodelinfo_sub_ = node_nh.subscribe("/worldmodel/worldmodelinfo", 100, &MslControl::worldimodelinfoUpdate,this);
      control_timer_ = control_nh.createTimer(ros::Duration(0.03),&MslControl::loopControl,this);
 
@@ -196,26 +207,9 @@ namespace nubot{
        //ROS_INFO("%f,%f,%f,%f,%f",dis,theta,m_strategy_.m_plan_.m_behaviour_.app_w_,m_strategy_.m_plan_.m_behaviour_.app_vx_,m_strategy_.m_plan_.m_behaviour_.app_vy_);
        setEthercatCommond();
        info2coachSend();
-
-
-       delta_x = m_strategy_.m_plan_.m_behaviour_.app_vx_*0.03;
-       delta_y = m_strategy_.m_plan_.m_behaviour_.app_vy_*0.03;
-       robot_pos_ = prel2global(robot_pos_,robot_angle_.radian_,DPoint(delta_x,delta_y));
-       robot_angle_.radian_ += m_strategy_.m_plan_.m_behaviour_.app_w_*0.03;
-
-
-       m_strategy_.m_plan_.m_behaviour_.robot_pos_= robot_pos_;
-       m_strategy_.m_plan_.robot_pos_ = robot_pos_;
-       m_strategy_.robot_pos_ = robot_pos_;
-
-     // robot_angle.radian_ = (double)_robotinfo_msg.heading.theta;
-
-       m_strategy_.m_plan_.m_behaviour_.robot_ori_ = robot_angle_;
-       m_strategy_.m_plan_.robot_ori_ = robot_angle_;
-       m_strategy_.robot_ori_ = robot_angle_;
-
-
-     ROS_INFO("%f,%f,%f,%f",robot_pos_.x_ ,robot_pos_.y_, dis,theta);
+       nubot_standalone::BallHandle  ballhandle;
+       ballhandle.request.enable = 0;
+       ballhandle_client_.call(ballhandle);
 
     }
 

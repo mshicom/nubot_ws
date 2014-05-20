@@ -338,6 +338,31 @@ void Nubot_HWController::Timer1_Process(const ros::TimerEvent &e)
    refresh();
 }
 
+/* int64 req.enabble = 0, unable
+ * int64 req.enabble = 1, enable
+ *
+ * int64 req.strength =  the shoot power
+ *
+ * int64 res.response = 0, shoot state: faild
+ * int64 res.response = 1, shoot state: success
+ */
+bool Nubot_HWController::ShootControlServive(nubot_standalone::Shoot::Request  &req,
+                         nubot_standalone::Shoot::Response &res)
+{
+     return true;
+}
+
+/* int64 req.enabble = 0, unable
+ * int64 req.enabble = 1, enable
+ * int64 res.response = 0, dribble state: no ball
+ * int64 res.response = 1, dribble state: holding ball
+ */
+bool Nubot_HWController::BallHandleControlService(nubot_standalone::BallHandle::Request  &req,
+                              nubot_standalone::BallHandle::Response &res)
+{
+   return true;
+}
+
 const double LIMITEDRPM=12000;
 void Nubot_HWController::BaseController(/*const ros::TimerEvent &event*/)
 {
@@ -449,9 +474,12 @@ Nubot_HWController::Nubot_HWController(int argc,char** argv,const std::string &n
     OdeInfo_pub = new realtime_tools::RealtimePublisher<nubot_standalone::VelCmd>(n, "/nubotdriver/odoinfo", 4);
 
     timer1=n.createTimer(ros::Rate(100),&Nubot_HWController::Timer1_Process,this);
-
+    std::string  service = "ballhandle";
     Velcmd_sub_ = n.subscribe("/nubotcotrol/velcmd",0,&Nubot_HWController::Read_VelCmd,this);
+    ballhandle_service_ = n.advertiseService(service,&Nubot_HWController::BallHandleControlService,this);
+
 }
+
 
 Nubot_HWController::~Nubot_HWController()
 {
