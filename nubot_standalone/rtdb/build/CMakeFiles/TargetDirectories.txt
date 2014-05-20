@@ -1,4 +1,0 @@
-/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/comm/CMakeFiles/comm.dir
-/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/CMakeFiles/read.dir
-/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/rtdb/CMakeFiles/rtdb.dir
-/home/xiao/workspace/msl/CAMBADA/rtdb_new/build/example/CMakeFiles/write.dir

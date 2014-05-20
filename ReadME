@@ -1,0 +1,2 @@
+git clone 以后先cd到src目录下执行catkin_init_workspace
+然后就可以在nubot_ws下面catkin_make了

@@ -1,1 +1,0 @@
-/usr/bin/gcc      CMakeFiles/read.dir/read.c.o  -o ../bin/read -rdynamic ../lib/librtdb.a 
