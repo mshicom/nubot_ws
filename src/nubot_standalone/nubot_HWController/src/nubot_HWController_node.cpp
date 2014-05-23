@@ -16,20 +16,27 @@
 #include <ros/ros.h>
 #include <boost/circular_buffer.hpp>
 #include <boost/foreach.hpp>
+#include <boost/asio.hpp>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 // C与C++混合编程要在CPP文件中加extern “C”关键字，否则链接会出错
-extern "C" {
 #include "soem/EtherCAT.h"
-}
+
 
 // 动态参数服务器
 #include <dynamic_reconfigure/server.h>
 #include <nubot_standalone/controllerConfig.h>
 
 #include "nubot_HWController/nubot_HWController_node.h"
+#include "nubot_HWController/cmac.h"
+
 #include "nubot_standalone/VelCmd.h"
 #include "nubot_standalone/DebugInfo.h"
-#include "nubot_HWController/cmac.h"
+#include "nubot_standalone/Shoot.h"
+#include "nubot_standalone/BallHandle.h"
+
 
 #define CAN_SLOT_POSITION 4     // CAN模块位置
 
@@ -85,6 +92,99 @@ public:
 };
 
 
+Nubot_HWController::Nubot_HWController()
+    :n(),motor_left(motor_speed[0]),motor_right(motor_speed[1]),
+      Vx(0),Vy(0),w(0),P(9.5),I(2),D(2.4),Kx_f(1.2),Kx_b(0.8),
+      FBRatio(1.0),FFRatio(1.0),
+      cmac(1, 2, 20, 100, 0),
+      BallHandleEnable(false),ShootEnable(false),
+      strand_(io),timer1_(io, boost::posix_time::millisec(1)),timer2_(io, boost::posix_time::millisec(30)),timer3_(io)
+{
+#if USE_CURSE
+    initscr();
+#endif
+
+    f = boost::bind(&Nubot_HWController::ParamChanged, this, _1, _2);
+    server.setCallback(f);
+
+#if 0
+    n.param<double>("forward_ratio", FFRatio, 0);
+    n.param<double>("backward_ratio", FBRatio,  1);
+    n.param<double>("P", P,  35);
+    n.param<double>("dist", BallHoldingDistance,  0.7);
+#endif
+
+    DribbleParamRead();
+
+    double imin[3]={-500,-1,-1};
+    double imax[3]={ 500, 1, 1};
+    cmac.SetInputRange(imin,imax);
+    cmac.LoadTable("wtable.dat");
+
+
+    // 初始化环形buffer
+    e_l.assign(3,3,0);
+    e_r.assign(3,3,0);
+    Vxs.assign(4,4,0);
+
+    try
+    {
+        EtherCAT_init("eth0");
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    //Base_Enable(false);
+
+    DebugInfo_pub = new realtime_tools::RealtimePublisher<nubot_standalone::DebugInfo>(n, "/nubotdriver/debug", 4);
+    OdeInfo_pub = new realtime_tools::RealtimePublisher<nubot_standalone::VelCmd>(n, "/nubotdriver/odoinfo", 4);
+
+    //timer1=n.createTimer(ros::Rate(100),&Nubot_HWController::Timer1_Process,this);
+
+    Velcmd_sub_ = n.subscribe("/Motion_Velcmd",0,&Nubot_HWController::Read_VelCmd,this);
+
+    ballhandle_service_ = n.advertiseService("BallHandle",&Nubot_HWController::BallHandleControlService,this);
+    shoot_service_ = n.advertiseService("Shoot",&Nubot_HWController::ShootControlServive,this);
+
+
+}
+
+Nubot_HWController::~Nubot_HWController()
+{
+    try
+    {
+        Elmo_Process_2(zero2);
+        Elmo_Process_1(zero4,0);
+
+        Base_Enable(false);
+        Ballhandle_Enable(false);
+        #if USE_CURSE
+            endwin();
+        #endif
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+
+}
+
+void Nubot_HWController::Run()
+{
+    boost::thread_group g;
+    //timer1_.async_wait(strand_.wrap(boost::bind(&Nubot_HWController::Process_1ms, this)));
+    //timer2_.async_wait(strand_.wrap(boost::bind(&Nubot_HWController::Process_30ms, this)));
+    timer1_.async_wait((boost::bind(&Nubot_HWController::Process_10ms, this)));
+    timer2_.async_wait((boost::bind(&Nubot_HWController::Process_30ms, this)));
+    g.create_thread(boost::bind(&boost::asio::io_service::run, &io));
+    g.create_thread(boost::bind(&boost::asio::io_service::run, &io));
+
+    ros::spin();
+    g.join_all();
+
+}
+
 ///////////////////////////////////////////////////////
 /****************** HKH_201405 ***********************
 //  功能: 初始化电位基准读数和量程两个参数
@@ -139,21 +239,8 @@ void Nubot_HWController::DribbleController()
     // 处理电位器数据
     DribbleGetState();
 
-#if 0
-    static enum {
-        BALL_IS_LOST=0
-    } state = BALL_IS_LOST;
-
-    switch(state)
-    {
-    case BALL_IS_LOST:
-
-        break;
-    default:
-        break;
-
-    }
-#endif
+    if(!BallHandleEnable)
+        return;
 
     const double VelRatio=75/105.0*1.414;   // 滚动轮线速度/球线速度,由机构决定
     const double WheelDiameter=5.2f;        // 主动轮半径,cm
@@ -168,7 +255,7 @@ void Nubot_HWController::DribbleController()
         LeverPos_SetPoint=1.2;
     else
         LeverPos_SetPoint=0.8;
-    printw("diff:%.1f, w/x:%.1f",Vx_diff,w/(Vx+0.01));
+    printf("diff:%.1f, w/x:%.1f",Vx_diff,w/(Vx+0.01));
 #endif
 
 
@@ -180,7 +267,7 @@ void Nubot_HWController::DribbleController()
     // 用环形buffer记录历史误差，最新的误差索引总是为2，过去的数据索引依次递减
     e_l.push_back(LeverPos_ErrL);
     e_r.push_back(LeverPos_ErrR);
-    printw("error_left:(%.1f) error_right:(%.1f)\n",e_l[2],e_r[2]);
+    printf("error_left:(%.1f) error_right:(%.1f)\n",e_l[2],e_r[2]);
 
 #if 0
     // 增量式PID，注意I参数不能为0，否则算法不起作用
@@ -251,7 +338,7 @@ void Nubot_HWController::DribbleController()
         FeedForwardVel_Right = 0;
 #endif
 
-    printw("FeedBackVel:(%.1f %.1f) FeedForwardVel:(%.1f %.1f)\n",FeedBackVel_Left,FeedBackVel_Right,FeedForwardVel_Left,FeedForwardVel_Right);
+    printf("FeedBackVel:(%.1f %.1f) FeedForwardVel:(%.1f %.1f)\n",FeedBackVel_Left,FeedBackVel_Right,FeedForwardVel_Left,FeedForwardVel_Right);
 
     // 控制器输出:主动带球电机转速(RPM)=反馈输出x反馈权重 + 前馈输出x前馈权重 */
     motor_left = (FeedBackVel_Left  + FeedForwardVel_Left )*60.0*GearRatio;
@@ -261,11 +348,15 @@ void Nubot_HWController::DribbleController()
     motor_left = Limmit(-6000,motor_left, 6000);
     motor_right= Limmit(-6000,motor_right,6000);
 
+    BallLockEnable(IsBallLost);
+
     // reverting the right motor speed
     motor_right=-motor_right;
     Elmo_Process_2(motor_speed);
 
-    printw("Target:%.1f,Left:%.1f,Right:%.1f output:L:%d,R:%d\n",LeverPos_SetPoint,LeverPos_Left,LeverPos_Right,motor_left,motor_right);
+
+
+    printf("Target:%.1f,Left:%.1f,Right:%.1f output:L:%d,R:%d\n",LeverPos_SetPoint,LeverPos_Left,LeverPos_Right,motor_left,motor_right);
 #if 0
     ROS_INFO("%s %s(%.1f,%.1f) ",st,IsBallLost? "L":"H",BallDistance_Left,BallDistance_Right);
     ROS_INFO("Vx:%.1f(%.1f) Vy:%.1f w:%.1f\t",Vx,RelVx,Vy,w);
@@ -296,11 +387,11 @@ const double VEL_TO_RPM_RATIO=MOTOR_GEAR_RATIO*60.0/(M_PI*WHEEL_DIAMETER);
 
 void Nubot_HWController::Timer1_Process(const ros::TimerEvent &e)
 {
-    clear();
+    //clear();
     ros::Duration time_err=e.current_real-e.current_expected;
-    printw("Time error:%.2fms,Last duration:%.2fms\n",time_err.toSec()*1000,(e.profile.last_duration).toSec()*1000);
+    printf("Time error:%.2fms,Last duration:%.2fms\n",time_err.toSec()*1000,(e.profile.last_duration).toSec()*1000);
 
-    printw("Vx:%.1f,Vy:%.1f,w:%.1f\n",Vx,Vy,w);
+    printf("Vx:%.1f,Vy:%.1f,w:%.1f\n",Vx,Vy,w);
 
     static trigger<3> t;
     if(t())
@@ -335,7 +426,7 @@ void Nubot_HWController::Timer1_Process(const ros::TimerEvent &e)
         //LeverPos_SetPoint = LeverPos_SetPoint==0.5? 0.7 : 0.5;
 #endif
 
-   refresh();
+   //refresh();
 }
 
 /* int64 req.enabble = 0, unable
@@ -349,18 +440,31 @@ void Nubot_HWController::Timer1_Process(const ros::TimerEvent &e)
 bool Nubot_HWController::ShootControlServive(nubot_standalone::Shoot::Request  &req,
                          nubot_standalone::Shoot::Response &res)
 {
-     return true;
+    ShootPower = req.strength;
+    //Process_Shoot();
+    boost::thread t1(boost::bind(&Nubot_HWController::Process_Shoot, this));
+
+    res.response = ShootDone? 1:0;
+
+    return true;
 }
 
-/* int64 req.enabble = 0, unable
- * int64 req.enabble = 1, enable
+/* int64 req.enable = 0, unable
+ * int64 req.enable = 1, enable
  * int64 res.response = 0, dribble state: no ball
  * int64 res.response = 1, dribble state: holding ball
  */
 bool Nubot_HWController::BallHandleControlService(nubot_standalone::BallHandle::Request  &req,
                               nubot_standalone::BallHandle::Response &res)
 {
-   return true;
+    if(BallHandleEnable!=req.enable)
+        Ballhandle_Enable(req.enable);
+
+    BallHandleEnable=req.enable;
+
+    res.response = BallSensor_IsHolding;
+
+    return true;
 }
 
 const double LIMITEDRPM=12000;
@@ -383,7 +487,7 @@ void Nubot_HWController::BaseController(/*const ros::TimerEvent &event*/)
              v[i] = v[i]*LIMITEDRPM/vmax;
 
     Elmo_Process_1(v,Real_v);
-    printw("M1: %d  M2: %d  M3: %d  M4: %d  M5: %d  M6: %d  M7: %d\n",Real_v[0],Real_v[1],Real_v[2],Real_v[3],Real_v[4],Real_v[5],Real_v[6]);
+    printf("M1: %d  M2: %d  M3: %d  M4: %d  M5: %d  M6: %d  M7: %d\n",Real_v[0],Real_v[1],Real_v[2],Real_v[3],Real_v[4],Real_v[5],Real_v[6]);
 
     Real_w  = (-Real_v[1] - Real_v[3])/(2*WHEEL_DISTANCE*VEL_TO_RPM_RATIO);
     Real_Vx = (Real_v[0]+Real_v[1]-Real_v[2]-Real_v[3])/(2*1.414*VEL_TO_RPM_RATIO);
@@ -403,104 +507,11 @@ void Nubot_HWController::Read_VelCmd(const nubot_standalone::VelCmd::ConstPtr& c
     Vx_diff = Vxs[3]+Vxs[2]-(Vxs[1]+Vxs[0]);
 }
 
-#include <fstream>
-
-Nubot_HWController::Nubot_HWController(int argc,char** argv,const std::string &name)
-    :n(),motor_left(motor_speed[0]),motor_right(motor_speed[1]),
-      Vx(0),Vy(0),w(0),P(9.5),I(2),D(2.4),Kx_f(1.2),Kx_b(0.8),
-      FBRatio(1.0),FFRatio(1.0),
-      cmac(1, 2, 20, 100, 0)
-{
-
-    initscr();
-
-    f = boost::bind(&Nubot_HWController::ParamChanged, this, _1, _2);
-    server.setCallback(f);
-
-#if 0
-    n.param<double>("forward_ratio", FFRatio, 0);
-    n.param<double>("backward_ratio", FBRatio,  1);
-    n.param<double>("P", P,  35);
-    n.param<double>("dist", BallHoldingDistance,  0.7);
-#endif
-
-    DribbleParamRead();
-
-    double imin[3]={-500,-1,-1};
-    double imax[3]={ 500, 1, 1};
-    cmac.SetInputRange(imin,imax);
-    cmac.LoadTable("wtable.dat");
-
-#if 0
-    {
-        double ip,op[2],y[2],err[2];
-        double err_rms;
-        cmac.LoadTable("wtable.dat");
-        for(int j=0;j<20;j++)
-        {
-            std::ofstream data("out.dat");
-            err_rms=0;
-            for(int i=0;i<360;i++)
-            {
-                y[0]=100*sin(1*i/180.0*M_PI);
-                y[1]=100*cos(1*i/180.0*M_PI);
-                ip=i;
-                cmac.Calc(&ip,op);
-                err[0]=(y[0]-op[0])*0.4;
-                err[1]=(y[1]-op[1])*0.1;
-                cmac.Train(err);
-                err_rms+=pow(y[0]-op[0],2);
-                data<<i<<' '<<y[0]<<' '<<op[0]<<endl;
-            }
-            data.flush();
-            data.close();
-            printw("itera:%d, err:%.4f\n",j,sqrt(err_rms/360.0));
-            getchar();
-        }
-        cmac.SaveTable("wtable.dat");
-        exit(0);
-    }
-
-#endif
-    // 初始化环形buffer
-    e_l.assign(3,3,0);
-    e_r.assign(3,3,0);
-    Vxs.assign(4,4,0);
-
-    EtherCAT_init("eth0");
-    //Base_Enable(false);
-
-    DebugInfo_pub = new realtime_tools::RealtimePublisher<nubot_standalone::DebugInfo>(n, "/nubotdriver/debug", 4);
-    OdeInfo_pub = new realtime_tools::RealtimePublisher<nubot_standalone::VelCmd>(n, "/nubotdriver/odoinfo", 4);
-
-    timer1=n.createTimer(ros::Rate(100),&Nubot_HWController::Timer1_Process,this);
-    std::string  service = "ballhandle";
-    Velcmd_sub_ = n.subscribe("/nubotcotrol/velcmd",0,&Nubot_HWController::Read_VelCmd,this);
-    ballhandle_service_ = n.advertiseService(service,&Nubot_HWController::BallHandleControlService,this);
-
-}
 
 
-Nubot_HWController::~Nubot_HWController()
-{
-    Elmo_Process_2(zero2);
-    Elmo_Process_1(zero4,0);
 
-    Base_Enable(false);
-    Ballhandle_Enable(false);
 
-    endwin();
-}
 
-int main(int argc,char** argv)
-{
-    ros::init(argc,argv,"Nubot_HWController");
-
-    Nubot_HWController controller(argc,argv,"Nubot_HWController");
-
-    ros::spin();
-    return 0;
-}
 
 
 /****************** HKH_201405 ***********************
@@ -522,9 +533,9 @@ bool Nubot_HWController::DribbleParamCalibrate(void)
        BallHandlingSensor_Left = in_EL3064->invalue1;
        BallHandlingSensor_Right= in_EL3064->invalue2;
     }
-    catch(...)
+    catch (std::exception& e)
     {
-        printw("Fuck you EtherCat!\n");
+        std::cerr << e.what() << std::endl;
     }
 #if DribbleDebug
     //static ofstream dbg("drible.txt");
@@ -634,10 +645,20 @@ bool Nubot_HWController::DribbleParamCalibrate(void)
 bool Nubot_HWController::DribbleGetState(void)
 {
     // 获得电位器读数
-    int BallSensor_Left = in_EL3064->invalue1 -BallSensor_LBias;
-    int BallSensor_Right= in_EL3064->invalue2 -BallSensor_RBias;
+    int BallSensor_Left,BallSensor_Right;
+    try
+    {
+        BallSensor_Left = in_EL3064->invalue1 -BallSensor_LBias;
+        BallSensor_Right= in_EL3064->invalue2 -BallSensor_RBias;
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 
-    printw("L0:%d,	R0:%d\n", in_EL3064->invalue1,in_EL3064->invalue2);
+    printf("L0:%d,	R0:%d\n",
+           BallSensor_Left+(int)BallSensor_LBias,
+           BallSensor_Right+(int)BallSensor_RBias);
 
     // 将电位器读数归一化,0对应完全没碰到球,1对应球完全进来了
     LeverPos_Left  = BallSensor_Left /BallSensor_LStroke;
@@ -676,14 +697,226 @@ bool Nubot_HWController::DribbleGetState(void)
 }
 
 
-/*
-void Nubot_HWController::BallLockEnable(bool on);
+void Nubot_HWController::BallLockEnable(bool on)
 {
-    uint8 *data_out;
-    data_out = ec_slave[3].outputs;
-
-   *data_out = enable? 4 : 0;
-
-    ec_send_processdata();
+    if(on)
+        EL2008_set(BallLock_IO);
+    else
+        EL2008_clear(BallLock_IO);
 }
-*/
+
+
+#define  Delay2IGBT     100   //继电器导通到IGBT导通控制时间间隔,一次1ms,共100ms
+#define  ShotFinishTime 500  //射门完成周期,一次1ms,共500ms
+int kicktime=0;
+void Nubot_HWController::Shoot_Control(uint8 *IsKick, uint16 ShootPower)
+{
+    if(*IsKick==1 && kicktime<ShotFinishTime) //
+    {
+        if(kicktime<Delay2IGBT)
+        {
+            EL2008_set(Relay_IO);
+        }
+        else if(kicktime<Delay2IGBT+ShootPower)
+        {
+            EL2008_set(Relay_IO);
+            EL2008_set(IGBT_IO);
+        }
+        else
+        {
+            EL2008_clear(Relay_IO);
+            EL2008_clear(IGBT_IO);
+        }
+        kicktime++;
+    }
+    else
+    {
+        EL2008_clear(Relay_IO);
+        EL2008_clear(IGBT_IO);
+        *IsKick=0;
+        kicktime=0;
+    }
+}
+
+void Nubot_HWController::Process_Shoot()
+{
+    boost::asio::deadline_timer timer(io);
+
+    ptime start= microsec_clock::local_time();
+    ptime now  = microsec_clock::local_time();
+
+    time_duration diff = now - start;
+    while(diff < millisec(Delay2IGBT) )
+    {
+        EL2008_set(Relay_IO);
+
+
+        //时间还没够
+        time_duration dt=min(millisec(20), millisec(Delay2IGBT)-diff);
+        usleep(dt.total_microseconds());
+        //timer3_.expires_from_now(dt);
+        //timer3_.wait(boost::bind(&Nubot_HWController::Process_Shoot, this));
+        diff = microsec_clock::local_time() - start;
+        std::cout<<diff.total_milliseconds()<<"-OpenRelay"<<endl;
+    }
+
+    while(diff < millisec(Delay2IGBT+ShootPower) )
+    {
+        EL2008_set(Relay_IO);
+        EL2008_set(IGBT_IO);
+
+        //时间还没够
+        time_duration dt=min(millisec(20), millisec(Delay2IGBT+ShootPower)-diff);
+        usleep(dt.total_microseconds());
+        //timer3_.expires_from_now(dt);
+        //timer3_.wait(boost::bind(&Nubot_HWController::Process_Shoot, this));
+        diff = microsec_clock::local_time() - start;
+        std::cout<<diff.total_milliseconds()<<"-OpenIGBT"<<endl;
+    }
+
+    EL2008_clear(Relay_IO);
+    EL2008_clear(IGBT_IO);
+    ShootDone = true;
+    std::cout<<"-Done"<<endl;
+
+
+
+#if 0
+    static ptime start;
+
+    ptime now = microsec_clock::local_time();
+    time_duration diff = now - start;
+    switch(ShootState)
+    {
+    // 启动时钟顺序
+    case 0:
+        start=now;
+        diff =millisec(0);
+        ShootState=1;
+        ShootDone = false;
+
+    //  Relay预启动
+    case 1:
+        //EL2008_set(Relay_IO);
+        if(diff < millisec(Delay2IGBT) )
+        {
+            //时间还没够
+            time_duration dt=min(millisec(20), millisec(Delay2IGBT)-diff);
+            timer3_.expires_from_now(dt);
+            timer3_.wait(boost::bind(&Nubot_HWController::Process_Shoot, this));
+        }
+        else
+            ShootState=2;
+        break;
+
+    // 打开IGBT，电磁铁使劲
+    case 2:
+        //EL2008_set(Relay_IO);
+        //EL2008_set(IGBT_IO);
+        if(diff < millisec(Delay2IGBT+ShootPower) )
+        {
+            //时间还没够
+            time_duration dt=min(millisec(20), millisec(Delay2IGBT+ShootPower)-diff);
+            timer3_.expires_from_now(dt);
+            timer3_.wait(boost::bind(&Nubot_HWController::Process_Shoot, this));
+        }
+        else
+            ShootState=3;
+        break;
+
+    // 打完收工
+    case 3:
+        //EL2008_clear(Relay_IO);
+        //EL2008_clear(IGBT_IO);
+        ShootDone = true;
+        ShootState=0;
+        break;
+
+    default:
+        ShootState=0;
+        break;
+    }
+    std::cout<<diff.total_milliseconds()<<" state:"<<ShootState<<endl;
+#endif
+}
+
+
+void Nubot_HWController::Process_10ms()
+{
+    static ros::Time last=ros::Time::now();
+    ros::Duration dt=ros::Time::now()-last;
+    last=ros::Time::now();
+    double dus=1000-dt.toNSec()/1000.0;
+
+
+    if(ros::ok())
+    {
+        timer1_.expires_at(timer1_.expires_at() + boost::posix_time::millisec(10));
+        timer1_.async_wait(strand_.wrap(boost::bind(&Nubot_HWController::Process_10ms, this)));
+
+        #if USE_CURSE
+            clear();
+        #endif
+        printf("dt:%10.3fus\n",dus/*diff.total_microseconds()*/);
+        DribbleController();
+        // 发送状态信息
+        if (DebugInfo_pub->trylock())
+        {
+            DebugInfo_pub->msg_.d1 =LeverPos_Left;//LeverPos_Left;
+            DebugInfo_pub->msg_.d2 =LeverPos_Right;
+            DebugInfo_pub->unlockAndPublish();
+        }
+        #if USE_CURSE
+        refresh();
+        #endif
+    }
+
+    //static trigger<100> t;
+    //if(t())
+}
+
+void Nubot_HWController::Process_30ms()
+{
+    if(ros::ok())
+    {
+        //clear();
+        timer2_.expires_at(timer2_.expires_at() + boost::posix_time::millisec(30));
+        timer2_.async_wait(strand_.wrap(boost::bind(&Nubot_HWController::Process_30ms, this)));
+
+
+        BaseController();
+        printf("Vx:%.1f,Vy:%.1f,w:%.1f\n",Vx,Vy,w);
+        printf("RVx:%.1f,RVy:%.1f,Rw:%.1f\n",Real_Vx,Real_Vy,Real_w);
+
+        // 发送里程计信息
+        if (OdeInfo_pub->trylock())
+        {
+            OdeInfo_pub->msg_.header.stamp = ros::Time::now();
+            OdeInfo_pub->msg_.w =Real_w;
+            OdeInfo_pub->msg_.Vx=Real_Vx;
+            OdeInfo_pub->msg_.Vy=Real_Vy;
+            OdeInfo_pub->unlockAndPublish();
+        }
+        //refresh();
+    }
+}
+
+
+int main(int argc,char** argv)
+{
+    ros::init(argc,argv,"Nubot_HWController");
+
+    Nubot_HWController controller;
+
+    controller.Run();
+
+
+    return 0;
+}
+
+
+
+
+
+
+

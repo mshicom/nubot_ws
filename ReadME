@@ -1,2 +1,5 @@
 git clone 以后先cd到src目录下执行catkin_init_workspace
 然后就可以在nubot_ws下面catkin_make了
+还要在~/.bashrc中加入source ~/nubot_ws/devel/setup.bash
+
+如果显示找不到 -ldrealtime_tools, 请执行catkin_make install

@@ -6,9 +6,11 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <iostream>
 #include <memory.h>
 #include "nubot_HWController/cmac.h"
 #include <assert.h>
+
 
 /*
 MODCMAC returns the output of the network for the input IP after modifying
@@ -79,11 +81,18 @@ void CMAC::SetInputRange(double *imin, double *imax)
 CMAC::~CMAC()
 {
     SaveTable("wtable.dat");
+    try
+    {
 
-    delete [] addrs,Imin,Imax,IpRange;
+        delete [] addrs,Imin,Imax,IpRange;
 
-    for (size_t i=0;i<OpSize;i++)
-        delete [] wts[i];
+        for (size_t i=0;i<OpSize;i++)
+            delete [] wts[i];
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
     //delete [] wts;
 }
 

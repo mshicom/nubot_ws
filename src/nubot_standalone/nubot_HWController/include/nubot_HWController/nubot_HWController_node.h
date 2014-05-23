@@ -4,6 +4,9 @@
 #include <ros/ros.h>
 #include <boost/circular_buffer.hpp>
 
+#include <boost/asio.hpp>
+
+
 // 动态参数服务器
 #include <dynamic_reconfigure/server.h>
 #include <nubot_standalone/controllerConfig.h>
@@ -11,10 +14,10 @@
 #include <realtime_tools/realtime_publisher.h>
 #include "nubot_standalone/DebugInfo.h"
 #include "nubot_standalone/VelCmd.h"
-#include "nubot_HWController/cmac.h"
 
-#include "nubot_standalone/BallHandle.h"
+#include "nubot_HWController/cmac.h"
 #include "nubot_standalone/Shoot.h"
+#include "nubot_standalone/BallHandle.h"
 
 
 using namespace std;
@@ -22,17 +25,23 @@ using namespace std;
 class Nubot_HWController
 {
 public:
-    Nubot_HWController(int argc,char** argv,const std::string &name);
+    Nubot_HWController();
     ~Nubot_HWController();
     bool DribbleParamRead(void);
     bool DribbleParamCalibrate(void);
     bool DribbleGetState(void);
     void DribbleController();
     void Timer1_Process(const ros::TimerEvent &event);
-    //void BallLockEnable(bool on);
+    void BallLockEnable(bool on);
+    void Shoot_Control(uint8 *IsKick, uint16 ShootPower);
+
     void Read_VelCmd(const nubot_standalone::VelCmd::ConstPtr& cmd);
     void ParamChanged(nubot_HWController::controllerConfig &config, uint32_t level);
     void BaseController(/*const ros::TimerEvent &event*/);
+    void Process_10ms();
+    void Process_30ms();
+    void Process_Shoot();
+    void Run();
 
     bool BallHandleControlService(nubot_standalone::BallHandle::Request  &req,
                                   nubot_standalone::BallHandle::Response &res);
@@ -55,6 +64,11 @@ private:
     ros::ServiceServer shoot_service_;
 
 public:
+    bool  BallHandleEnable;
+    bool  ShootEnable;
+    int   ShootPower;
+    int   ShootState;
+    bool   ShootDone;
 
     CMAC  cmac;
     //double cmac_ip[3],cmac_op[2],cmac_delta[2];
@@ -81,6 +95,14 @@ public:
     double BallSensor_LBias,BallSensor_RBias,BallSensor_LStroke,BallSensor_RStroke;
     bool IsBallSensorInited;
     bool BallSensor_IsHolding,IsBallLost;
+
+private:
+    boost::asio::io_service io;
+    boost::asio::strand strand_;
+    boost::asio::deadline_timer timer1_;
+    boost::asio::deadline_timer timer2_;
+    boost::asio::deadline_timer timer3_;
+
 };
 
 
