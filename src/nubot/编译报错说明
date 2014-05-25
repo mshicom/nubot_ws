@@ -1,0 +1,4 @@
+1.omni_vision/OmniVisionConfig.h：没有那个文件或目录
+答：需要把所有动态参数服务器的cfg文件添加执行属性（chmod +x），否则不会生成*Config.h
+
+
