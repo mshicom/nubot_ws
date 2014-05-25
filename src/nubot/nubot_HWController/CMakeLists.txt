@@ -88,8 +88,8 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES nubot_HWController
- CATKIN_DEPENDS roscpp std_msgs message_generation DEPENDS
+# LIBRARIES nubot_HWController
+ CATKIN_DEPENDS roscpp std_msgs message_generation DEPENDS realtime_tools nubot_common
 )
 
 ###########

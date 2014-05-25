@@ -86,10 +86,10 @@ public:
 
 Omni_Vision(int argc, char **argv)
 {
-    std::string calibration_path="/home/nubot/ros_workspace/src/nubot_standalone/omni_vision/calibration";
+    std::string calibration_path="/home/nubot2/nubot_ws/src/nubot/omni_vision/calibration";
     if(argc>1)
         calibration_path=argv[1];
-    ROS_INFO("initialize omni_vision process");
+    ROS_INFO("initialize the omni_vision  process");
     imginfo_     = new Omni_Image(calibration_path+"/ROI.xml");
     tranfer_     = new Transfer(calibration_path+"/mirror_calib.xml",*imginfo_);
     scanpts_     = new ScanPoints(*imginfo_);
@@ -158,6 +158,7 @@ publish()
 
     obstacles_info_.header.stamp= robot_info_.header.stamp;
     obstacles_info_.header.seq++;
+    obstacles_info_.pos.clear();
     for(obs_info & pt : obstacles_->obs_measure_)
     {
        nubot_common::Point2d point;

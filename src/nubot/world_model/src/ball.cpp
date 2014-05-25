@@ -39,8 +39,10 @@ void nubot::ball_object::set_ball_real_loc(PPoint _loc)      { ball_real_loc_=_l
 void nubot::ball_object::set_ball_vec(DPoint _vec)           { ball_velocity_=_vec; }
 void nubot::ball_object::set_ball_acc(DPoint _acc)           { ball_acc_=_acc; }
 void nubot::ball_object::set_ball_time(const ros::Time time) { ball_time_=time; }
-void nubot::ball_object::set_ball_pos_known(bool pos_known)  { ball_pos_known_=pos_known; }
-void nubot::ball_object::set_ball_vec_known(bool vec_known)  { ball_pos_known_=vec_known; }
+void nubot::ball_object::set_ball_pos_known(bool pos_known)  {
+    ball_pos_known_=pos_known;
+}
+void nubot::ball_object::set_ball_vec_known(bool vec_known)  { ball_vec_known_=vec_known; }
 void nubot::ball_object::set_duration(ros::Duration duration){ duration_=duration;}
 
 int           nubot::ball_object::get_ball_id()         { return robot_id_;}

@@ -21,7 +21,6 @@ catkin_package(
 
 set(world_model_includes
                ${catkin_INCLUDE_DIRS}
-               ${PROJECT_SOURCE_DIR}/core/include 
                ${PROJECT_SOURCE_DIR}/include
 )
 

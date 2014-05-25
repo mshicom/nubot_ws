@@ -142,7 +142,7 @@ Nubot_HWController::Nubot_HWController()
 
     timer1=n.createTimer(ros::Rate(100),&Nubot_HWController::Timer1_Process,this);
 
-    Velcmd_sub_ = n.subscribe("/Motion_Velcmd",0,&Nubot_HWController::Read_VelCmd,this);
+    Velcmd_sub_ = n.subscribe("/nubotcotrol/velcmd",0,&Nubot_HWController::Read_VelCmd,this);
 
     ballhandle_service_ = n.advertiseService("BallHandle",&Nubot_HWController::BallHandleControlService,this);
     shoot_service_ = n.advertiseService("Shoot",&Nubot_HWController::ShootControlServive,this);

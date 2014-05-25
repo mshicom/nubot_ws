@@ -13,9 +13,10 @@
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Twist.h>
 
-#include "nubot_standalone/VelCmd.h"
-#include <nubot_standalone/BallHandle.h>
-#include <nubot_standalone/Shoot.h>
+#include <nubot_common/VelCmd.h>
+#include <nubot_common/OminiVisionInfo.h>
+#include <nubot_common/BallHandle.h>
+#include <nubot_common/Shoot.h>
 
 
 class TeleopNubot
@@ -31,19 +32,25 @@ public:
 private:
 	ros::Publisher vel_pub;
     ros::Subscriber joy_sub;
+    ros::Subscriber ball_sub;
 
+    nubot_common::VelCmd cmd;
+    bool CatchEnable;
+    double ball_angle;
 	double deadzone_;
 
 	void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
+    void ballCallback(const nubot_common::OminiVisionInfo::ConstPtr& ball);
 };
 
 TeleopNubot::TeleopNubot()
-    :Vx(0),Vy(0),w(0)
+    :Vx(0),Vy(0),w(0),ball_angle(0),CatchEnable(false)
 {
-    vel_pub = n.advertise<nubot_standalone::VelCmd>("Motion_Velcmd", 1);
-	joy_sub = n.subscribe<sensor_msgs::Joy>("joy", 10, &TeleopNubot::joyCallback, this);
-    ballhandle_client_ =  n.serviceClient<nubot_standalone::BallHandle>("BallHandle");
-    shoot_client_ = n.serviceClient<nubot_standalone::Shoot>("Shoot");
+    vel_pub = n.advertise<nubot_common::VelCmd>("/nubotcotrol/velcmd", 10);
+    joy_sub = n.subscribe<sensor_msgs::Joy>("joy", 2, &TeleopNubot::joyCallback, this);
+    ball_sub= n.subscribe<nubot_common::OminiVisionInfo>("/omnivision/OminiVisionInfo", 2, &TeleopNubot::ballCallback, this);
+    ballhandle_client_ =  n.serviceClient<nubot_common::BallHandle>("BallHandle");
+    shoot_client_ = n.serviceClient<nubot_common::Shoot>("Shoot");
 }
 
 // 手柄消息回调函数，在ros::spin()里执行
@@ -58,35 +65,46 @@ TeleopNubot::TeleopNubot()
 
 void TeleopNubot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
-    nubot_standalone::VelCmd cmd;
-    cmd.Vx = joy->axes[idx_X]*300;
-    cmd.Vy = joy->axes[idx_Y]*0;
-    cmd.w  = joy->axes[idx_w]*M_PI;
-    vel_pub.publish(cmd);
 
-    static int A_last = 0;
-    if(A_last==0 && joy->buttons[Button_A]==1)
+    if(joy->buttons[Button_A]==1)
     {
-        nubot_standalone::Shoot s;
+        nubot_common::Shoot s;
         s.request.strength=4;
         shoot_client_.call(s);
     }
 
-    static int B_last = 0;
     static bool BallHandleEnable = false;
-    if(B_last==0 && joy->buttons[Button_B]==1)
+    if(joy->buttons[Button_B]==1)
     {
         BallHandleEnable=!BallHandleEnable;
-        nubot_standalone::BallHandle b;
+        nubot_common::BallHandle b;
         b.request.enable=BallHandleEnable;
         ballhandle_client_.call(b);
     }
 
-    A_last = joy->buttons[Button_A];
-    B_last = joy->buttons[Button_B];
+    /*速度指令*/
+    cmd.Vx = joy->axes[idx_X]*300;
+    cmd.Vy = joy->axes[idx_Y]*0;
+
+    CatchEnable = joy->buttons[Button_X];
+    // 朝球转
+    if(!CatchEnable)
+        cmd.w  = joy->axes[idx_w]*M_PI;
+
+    vel_pub.publish(cmd);
 }
 
+void TeleopNubot::ballCallback(const nubot_common::OminiVisionInfo::ConstPtr& ball)
+{
+    ball_angle = ball->ballinfo.real_pos.angle;
+    ROS_INFO("Angle:%.2f",ball_angle/M_PI*180.0);
 
+    if(CatchEnable)
+    {
+        cmd.w  = ball_angle;
+        vel_pub.publish(cmd);
+    }
+}
 
 int main(int argc, char** argv)
 {
@@ -98,7 +116,7 @@ int main(int argc, char** argv)
 	pid_t pid = vfork();
 	if(pid==0)
 	{
-		if(execlp("rosrun", "rosrun", "joy", "joy_node", (char *)0) <0)
+        if(execlp("rosrun", "rosrun", "joy", "joy_node", "_deadzone:=0.13", (char *)0) <0)
 			ROS_WARN("Process Joy not found!");
 
 		// 正常情况下exec函数不会返回
@@ -106,8 +124,8 @@ int main(int argc, char** argv)
 	}
 #endif
 
-
     ros::spin();
+
 	return (0);
 }
 

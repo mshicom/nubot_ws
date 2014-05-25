@@ -84,15 +84,13 @@ nubot::World_Model::updateOminivision(const nubot_common::OminiVisionInfo & omni
     ROS_INFO("x: %f y: %f angle: %f ",omni_info.robotinfo.pos.x,omni_info.robotinfo.pos.y,omni_info.robotinfo.heading.theta);
 
     std::vector< obstacle_object > obstacles;
-
-
     obstacles.reserve(omni_info.obstacleinfo.pos.size());
     for(nubot_common::Point2d point : omni_info.obstacleinfo.pos)
     {
         obstacle_object obs_temp;
         obs_temp.set_obstacle_loc(DPoint2d(point.x,point.y));
         obstacles.push_back(obs_temp);
-        ROS_INFO("x: %f y: %f",point.x,point.y);
+    //    ROS_INFO("x: %f y: %f",point.x,point.y);
     }
     obstacles_.set_omni_obstacles(obstacles);
     obstacles_.set_time(time_update);
@@ -104,8 +102,8 @@ nubot::World_Model::updateOminivision(const nubot_common::OminiVisionInfo & omni
     omni_ball.set_ball_real_loc(PPoint(Angle(omni_info.ballinfo.real_pos.angle),omni_info.ballinfo.real_pos.radius));
     omni_ball.set_ball_time(time_update);
     ball_info_.set_omni_ball(omni_ball);
-    ROS_INFO("x: %f y: %f vx: %f  vy: %f",omni_info.ballinfo.pos.x,omni_info.ballinfo.pos.y,
-             omni_info.ballinfo.velocity.x,omni_info.ballinfo.velocity.x);
+   // ROS_INFO("x: %f y: %f vx: %f  vy: %f",omni_info.ballinfo.pos.x,omni_info.ballinfo.pos.y,
+    //         omni_info.ballinfo.velocity.x,omni_info.ballinfo.velocity.x);
 
 }
 void
@@ -135,14 +133,16 @@ nubot::World_Model::publish()
    worldmodelinfo_.robotinfo.vrot     = robot_info_.get_robot_w();
 
 
- /*  std::vector< obstacle_object > obstacles = obstacles_.get_omni_obstacles();
-   worldmodelinfo_.obstacleinfo.length=obstacles.size();
+   std::vector< obstacle_object > obstacles = obstacles_.get_omni_obstacles();
+   worldmodelinfo_.obstacleinfo.pos.clear();
    for(std::size_t i = 0; i< obstacles.size() ; i++)
    {
-       worldmodelinfo_.obstacleinfo.pos[i].x= obstacles[i].get_obstacle_loc().x_;
-       worldmodelinfo_.obstacleinfo.pos[i].y= obstacles[i].get_obstacle_loc().y_;
+       nubot_common::Point2d point;
+       point.x=obstacles[i].get_obstacle_loc().x_;
+       point.y=obstacles[i].get_obstacle_loc().y_;
+       worldmodelinfo_.obstacleinfo.pos.push_back(point);
    }
-*/
+
    ball_object  mergeball=ball_info_.get_merge_ball();
    worldmodelinfo_.ballinfo.pos.x =  mergeball.get_ball_global_loc().x_;
    worldmodelinfo_.ballinfo.pos.y =  mergeball.get_ball_global_loc().y_;
@@ -212,11 +212,11 @@ nubot::World_Model::receivefromteamnates()
 void
 nubot::World_Model::sendtocoach()
 {
+    ROS_INFO("send the information to coach");
     robot2coach_.robot_id=2;
 
     robot2coach_.ball_global_loc.x=ball_info_.merge_ball_.get_ball_global_loc().x_;
     robot2coach_.ball_global_loc.y=ball_info_.merge_ball_.get_ball_global_loc().y_;
-
     DPoint ball_real(ball_info_.merge_ball_.get_ball_real_loc());
     robot2coach_.ball_real_loc.x=ball_real.x_;
     robot2coach_.ball_real_loc.y=ball_real.y_;
